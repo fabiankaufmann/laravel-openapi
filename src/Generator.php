@@ -28,26 +28,26 @@ class Generator
         InfoBuilder $infoBuilder,
         ServersBuilder $serversBuilder,
         TagsBuilder $tagsBuilder,
-        PathsBuilder $pathsBuilder,
-        ComponentsBuilder $componentsBuilder
+        PathsBuilder $pathsBuilder
     ) {
         $this->config = $config;
         $this->infoBuilder = $infoBuilder;
         $this->serversBuilder = $serversBuilder;
         $this->tagsBuilder = $tagsBuilder;
         $this->pathsBuilder = $pathsBuilder;
-        $this->componentsBuilder = $componentsBuilder;
     }
 
     public function generate(string $collection = self::COLLECTION_DEFAULT): OpenApi
     {
         $middlewares = Arr::get($this->config, 'collections.'.$collection.'.middlewares');
 
+        $this->componentsBuilder = new ComponentsBuilder($collection);
+
         $info = $this->infoBuilder->build(Arr::get($this->config, 'collections.'.$collection.'.info', []));
         $servers = $this->serversBuilder->build(Arr::get($this->config, 'collections.'.$collection.'.servers', []));
         $tags = $this->tagsBuilder->build(Arr::get($this->config, 'collections.'.$collection.'.tags', []));
         $paths = $this->pathsBuilder->build($collection, Arr::get($middlewares, 'paths', []));
-        $components = $this->componentsBuilder->build($collection, Arr::get($middlewares, 'components', []));
+        $components = $this->componentsBuilder->build(Arr::get($middlewares, 'components', []));
         $extensions = Arr::get($this->config, 'collections.'.$collection.'.extensions', []);
 
         $openApi = OpenApi::create()

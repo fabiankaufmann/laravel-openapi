@@ -3,6 +3,7 @@
 namespace Vyuldashev\LaravelOpenApi\Builders;
 
 use GoldSpecDigital\ObjectOrientedOAS\Objects\Components;
+use Illuminate\Support\Collection;
 use Vyuldashev\LaravelOpenApi\Builders\Components\CallbacksBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Components\RequestBodiesBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Components\ResponsesBuilder;
@@ -12,6 +13,8 @@ use Vyuldashev\LaravelOpenApi\Generator;
 
 class ComponentsBuilder
 {
+    private string $collection;
+
     protected CallbacksBuilder $callbacksBuilder;
     protected RequestBodiesBuilder $requestBodiesBuilder;
     protected ResponsesBuilder $responsesBuilder;
@@ -19,28 +22,25 @@ class ComponentsBuilder
     protected SecuritySchemesBuilder $securitySchemesBuilder;
 
     public function __construct(
-        CallbacksBuilder $callbacksBuilder,
-        RequestBodiesBuilder $requestBodiesBuilder,
-        ResponsesBuilder $responsesBuilder,
-        SchemasBuilder $schemasBuilder,
-        SecuritySchemesBuilder $securitySchemesBuilder
+        string $collection = Generator::COLLECTION_DEFAULT
     ) {
-        $this->callbacksBuilder = $callbacksBuilder;
-        $this->requestBodiesBuilder = $requestBodiesBuilder;
-        $this->responsesBuilder = $responsesBuilder;
-        $this->schemasBuilder = $schemasBuilder;
-        $this->securitySchemesBuilder = $securitySchemesBuilder;
+        $this->collection = $collection;
+
+        $this->callbacksBuilder = new CallbacksBuilder($this->getPathsFromConfig('callbacks'));
+        $this->requestBodiesBuilder = new RequestBodiesBuilder($this->getPathsFromConfig('request_bodies'));
+        $this->responsesBuilder = new ResponsesBuilder($this->getPathsFromConfig('responses'));
+        $this->schemasBuilder = new SchemasBuilder($this->getPathsFromConfig('schemas'));
+        $this->securitySchemesBuilder = new SecuritySchemesBuilder($this->getPathsFromConfig('security_schemes'));
     }
 
     public function build(
-        string $collection = Generator::COLLECTION_DEFAULT,
         array $middlewares = []
     ): ?Components {
-        $callbacks = $this->callbacksBuilder->build($collection);
-        $requestBodies = $this->requestBodiesBuilder->build($collection);
-        $responses = $this->responsesBuilder->build($collection);
-        $schemas = $this->schemasBuilder->build($collection);
-        $securitySchemes = $this->securitySchemesBuilder->build($collection);
+        $callbacks = $this->callbacksBuilder->build($this->collection);
+        $requestBodies = $this->requestBodiesBuilder->build($this->collection);
+        $responses = $this->responsesBuilder->build($this->collection);
+        $schemas = $this->schemasBuilder->build($this->collection);
+        $securitySchemes = $this->securitySchemesBuilder->build($this->collection);
 
         $components = Components::create();
 
@@ -82,5 +82,19 @@ class ComponentsBuilder
         }
 
         return $components;
+    }
+
+    private function getPathsFromConfig(string $type): array
+    {
+        $directories = config('openapi.collections.'.$this->collection.'.locations.'.$type, []);
+
+        foreach ($directories as &$directory) {
+            $directory = glob($directory, GLOB_ONLYDIR);
+        }
+
+        return (new Collection($directories))
+            ->flatten()
+            ->unique()
+            ->toArray();
     }
 }
