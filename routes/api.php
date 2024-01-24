@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
-use Vyuldashev\LaravelOpenApi\Http\OpenApiController;
+use Vyuldashev\LaravelOpenApi\Generator;
 
 Route::group(['as' => 'openapi.'], function () {
     foreach (config('openapi.collections', []) as $name => $config) {
@@ -12,8 +12,12 @@ Route::group(['as' => 'openapi.'], function () {
             continue;
         }
 
-        Route::get($uri, [OpenApiController::class, 'show'])
+        Route::get($uri, function (Generator $generator) use ($name) {
+            return $generator->generate($name);
+        })
+            ->where('name', $name)
             ->name($name.'.specification')
+            ->defaults('collection', $name)
             ->middleware(Arr::get($config, 'route.middleware'));
     }
 });
