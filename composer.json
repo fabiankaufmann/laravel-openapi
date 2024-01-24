@@ -1,5 +1,5 @@
 {
-    "name": "vyuldashev/laravel-openapi",
+    "name": "fabiankaufmann/laravel-openapi",
     "description": "Generate OpenAPI Specification for Laravel Applications",
     "keywords": [
         "laravel",
@@ -16,6 +16,10 @@
         {
             "name": "Vladimir Yuldashev",
             "email": "misterio92@gmail.com"
+        },
+        {
+            "name": "Fabian Kaufmann",
+            "email": "fabian@kaufmann.guru"
         }
     ],
     "require": {
